@@ -10,6 +10,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>leader-selection</module>
+        <module>watcher-demo</module>
     </modules>
 
     <properties>
