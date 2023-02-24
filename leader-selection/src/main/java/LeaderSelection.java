@@ -1,8 +1,8 @@
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.*;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 public class LeaderSelection implements Watcher {
 
@@ -11,18 +11,49 @@ public class LeaderSelection implements Watcher {
     //주키퍼는 클라이언트가 연결되었는지 지속적으로 확인한다.
     private static final int SESSION_TIMEOUT=3000; //<- ms 단위. 클라이언트가 연결되어 있는 지 확인하는 시간이다.
 
+    private static final String ELECTION_NAMESPACE="/election";
+
     private ZooKeeper zooKeeper;
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    private String currentZNodeName;
+
+    public static void main(String[] args) throws IOException, InterruptedException, KeeperException {
         LeaderSelection leaderSelection=new LeaderSelection();
 
         leaderSelection.connectToZookeeper();
+
+        leaderSelection.volunteerForLeadership();
+
+        leaderSelection.electLeader();
 
         leaderSelection.run();
 
         leaderSelection.close();
 
         System.out.println("disconnected from zookeeper. exiting...");
+    }
+
+    public void volunteerForLeadership() throws InterruptedException, KeeperException {
+        String znodePrefix = ELECTION_NAMESPACE + "/c_";
+        // 임시 zNode로 생성하면, 주키퍼 연결이 끊어질 경우 해당 z노드는 삭제된다.
+        String znodeFullPath = zooKeeper.create(znodePrefix, new byte[]{}, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+
+        System.out.println("znode name " + znodeFullPath);
+        this.currentZNodeName = znodeFullPath.replace("/election/", "");
+    }
+
+    public void electLeader() throws InterruptedException, KeeperException {
+        List<String> children=zooKeeper.getChildren(ELECTION_NAMESPACE,false);
+
+        Collections.sort(children);
+
+        String smallestChildren=children.get(0);
+
+        if(smallestChildren.equals(currentZNodeName)){
+            System.out.println("I am leader");
+            return;
+        }
+        System.out.println("The leader is "+smallestChildren);
     }
 
     public void connectToZookeeper() throws IOException {
