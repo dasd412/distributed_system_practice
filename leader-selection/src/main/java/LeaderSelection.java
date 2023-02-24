@@ -23,6 +23,7 @@
  */
 
 import org.apache.zookeeper.*;
+import org.apache.zookeeper.data.Stat;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -48,7 +49,7 @@ public class LeaderSelection implements Watcher {
 
         leaderSelection.volunteerForLeadership();
 
-        leaderSelection.electLeader();
+        leaderSelection.reElectLeader();
 
         leaderSelection.run();
 
@@ -66,18 +67,33 @@ public class LeaderSelection implements Watcher {
         this.currentZNodeName = znodeFullPath.replace("/election/", "");
     }
 
-    public void electLeader() throws InterruptedException, KeeperException {
-        List<String> children=zooKeeper.getChildren(ELECTION_NAMESPACE,false);
+    public void reElectLeader() throws InterruptedException, KeeperException {
 
-        Collections.sort(children);
+        Stat predecessorStat=null;
 
-        String smallestChildren=children.get(0);
+        String predecessorZNodeName="";
 
-        if(smallestChildren.equals(currentZNodeName)){
-            System.out.println("I am leader");
-            return;
+        while(predecessorStat==null){//<- 레이스 컨디션 방지용
+
+            List<String> children=zooKeeper.getChildren(ELECTION_NAMESPACE,false);
+
+            Collections.sort(children);
+
+            String smallestChildren=children.get(0);
+
+            if(smallestChildren.equals(currentZNodeName)){
+                System.out.println("I am leader");
+                return;
+            }else{
+                System.out.println("I am not leader");
+                //리더가 아니라면 바로 이전 순서의 노드를 확인
+                int predecessorIndex=Collections.binarySearch(children,currentZNodeName)-1;
+                predecessorZNodeName=children.get(predecessorIndex);
+                predecessorStat=zooKeeper.exists(ELECTION_NAMESPACE+"/"+predecessorZNodeName,this);
+            }
         }
-        System.out.println("The leader is "+smallestChildren);
+        System.out.println("Watching znode "+predecessorZNodeName);
+
     }
 
     public void connectToZookeeper() throws IOException {
@@ -108,6 +124,15 @@ public class LeaderSelection implements Watcher {
                     System.out.println("disconnected from zookeeper event");
                     zooKeeper.notifyAll();
                 }
+            case NodeDeleted:
+                try {
+                    reElectLeader();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } catch (KeeperException e) {
+                    throw new RuntimeException(e);
+                }
+                break;
         }
     }
 }
