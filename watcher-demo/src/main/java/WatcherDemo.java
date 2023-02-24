@@ -26,20 +26,30 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.Stat;
 
 import java.io.IOException;
+import java.util.List;
 
 public class WatcherDemo implements Watcher {
+
     private static final String ZOOKEEPER_ADDRESS = "localhost:2181";
+
     private static final int SESSION_TIMEOUT = 3000;
+
     private static final String TARGET_ZNODE = "/target_znode";
+
     private ZooKeeper zooKeeper;
 
     public static void main(String[] args) throws InterruptedException, IOException, KeeperException {
         WatcherDemo watchersDemo = new WatcherDemo();
+
         watchersDemo.connectToZookeeper();
 
+        watchersDemo.watchTargetZNode();
+
         watchersDemo.run();
+
         watchersDemo.close();
     }
 
@@ -53,12 +63,57 @@ public class WatcherDemo implements Watcher {
         }
     }
 
+    public void watchTargetZNode() throws InterruptedException, KeeperException {
+        Stat stat=zooKeeper.exists(TARGET_ZNODE,this);
+
+        // zNode가 존재하지 않으면 바로 종료
+        if (stat==null){
+            return;
+        }
+
+        byte [] data=zooKeeper.getData(TARGET_ZNODE,this,stat);
+
+        List<String> children=zooKeeper.getChildren(TARGET_ZNODE,this);
+
+        System.out.println("Data :"+new String(data) +" children : "+children);
+    }
+
     public void close() throws InterruptedException {
         zooKeeper.close();
     }
 
+    // 이벤트의 종류에 따라 핸들링해줌.
     @Override
-    public void process(WatchedEvent watchedEvent) {
+    public void process(WatchedEvent event) {
+        switch (event.getType()) {
+            case None:
+                if (event.getState() == Event.KeeperState.SyncConnected) {
+                    System.out.println("Successfully connected to Zookeeper");
+                } else {
+                    synchronized (zooKeeper) {
+                        System.out.println("Disconnected from Zookeeper event");
+                        zooKeeper.notifyAll();
+                    }
+                }
+                break;
+            case NodeDeleted:
+                System.out.println(TARGET_ZNODE+" was deleted");
+                break;
 
+            case NodeCreated:
+                System.out.println(TARGET_ZNODE+" was created");
+                break;
+            case NodeDataChanged: //getData() 호출 시
+                System.out.println(TARGET_ZNODE+ "data changed");
+                break;
+            case NodeChildrenChanged://getChildren() 호출 시
+                System.out.println(TARGET_ZNODE+" children changed");
+                break;
+        }
+        try{
+            watchTargetZNode();// 변경이 발생했을 때 모든 데이터를 최신으로 화면에 출력하기 위함. 그리고 일회용 트리거를 다시 등록하기 위함.
+        }catch (KeeperException | InterruptedException e){
+
+        }
     }
 }
