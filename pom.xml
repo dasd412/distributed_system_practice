@@ -11,6 +11,7 @@
     <modules>
         <module>leader-selection</module>
         <module>watcher-demo</module>
+        <module>service-registry</module>
     </modules>
 
     <properties>
