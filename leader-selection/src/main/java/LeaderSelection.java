@@ -73,8 +73,9 @@ public class LeaderSelection implements Watcher {
 
         String predecessorZNodeName="";
 
-        while(predecessorStat==null){//<- 레이스 컨디션 방지용
-
+        while(predecessorStat==null){//<- 레이스 컨디션 방지용. 아래 코드에서 getChildren()과 exists() 사이에서 고장 등에 의해 이전 z노드가 이미 삭제되었을 수도 있다.
+            // 그렇게 되면 null 값이 나오는 예외가 발생한다.
+            // 이러한 예외가 발생하면, 다시 로직을 반복해서 더 이전 z노드를 찾아본다.
             List<String> children=zooKeeper.getChildren(ELECTION_NAMESPACE,false);
 
             Collections.sort(children);
@@ -124,7 +125,7 @@ public class LeaderSelection implements Watcher {
                     System.out.println("disconnected from zookeeper event");
                     zooKeeper.notifyAll();
                 }
-            case NodeDeleted:
+            case NodeDeleted: // 만약 zooKeeper.exists(ELECTION_NAMESPACE+"/"+predecessorZNodeName,this);에 의해 지켜보고 있던 이전 zNode가 삭제되면 이 알림을 받게 된다.
                 try {
                     reElectLeader();
                 } catch (InterruptedException e) {
