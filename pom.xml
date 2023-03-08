@@ -13,6 +13,7 @@
         <module>watcher-demo</module>
         <module>service-registry</module>
         <module>httpserver</module>
+        <module>httpclient</module>
     </modules>
 
     <properties>
