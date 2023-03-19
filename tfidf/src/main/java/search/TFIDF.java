@@ -105,7 +105,7 @@ public class TFIDF {
         return Arrays.asList(line.split("(\\.)+|(,)+|( )+|(-)+|(\\?)+|(!)+|(;)+|(:)+|(/d)+|(/n)+"));
     }
 
-    public static List<String> getWordsFromLines(List<String> lines) {
+    public static List<String> getWordsFromDocument(List<String> lines) {
         List<String> words = new ArrayList<>();
 
         for (String line : lines) {
