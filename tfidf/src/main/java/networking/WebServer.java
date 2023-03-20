@@ -91,4 +91,7 @@ public class WebServer {
         outputStream.flush();
         outputStream.close();
     }
+
+    public void stop() {
+    }
 }
