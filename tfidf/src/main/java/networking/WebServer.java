@@ -93,5 +93,6 @@ public class WebServer {
     }
 
     public void stop() {
+        server.stop(10);
     }
 }

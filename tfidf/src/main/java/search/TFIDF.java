@@ -71,7 +71,7 @@ public class TFIDF {
         return score;
     }
 
-    public static Map<Double, List<String>> getDocumentsSortedByScore(List<String> terms, Map<String, DocumentData> documentResults) {
+    public static Map<Double, List<String>> getDocumentsScore(List<String> terms, Map<String, DocumentData> documentResults) {
 
         TreeMap<Double, List<String>> scoreToDocuments = new TreeMap<>();
 
