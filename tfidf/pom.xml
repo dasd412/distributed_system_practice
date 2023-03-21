@@ -58,7 +58,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>WatcherDemo</mainClass>
+                            <mainClass>Application</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
