@@ -1,3 +1,27 @@
+/*
+ *  MIT License
+ *
+ *  Copyright (c) 2019 Michael Pogrebinsky - Distributed Systems & Cloud Computing with Java
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ */
+
 package search;
 
 import cluster.management.ServiceRegistry;
@@ -17,16 +41,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserSearchHandler implements OnRequestCallback {
-
     private static final String ENDPOINT = "/documents_search";
-
     private static final String DOCUMENTS_LOCATION = "books";
-
-    private final WebClient client;
-
-    private final ServiceRegistry searchCoordinatorRegistry;
-
     private final ObjectMapper objectMapper;
+    private final WebClient client;
+    private final ServiceRegistry searchCoordinatorRegistry;
 
     public UserSearchHandler(ServiceRegistry searchCoordinatorRegistry) {
         this.searchCoordinatorRegistry = searchCoordinatorRegistry;
@@ -36,16 +55,15 @@ public class UserSearchHandler implements OnRequestCallback {
         this.objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
     }
 
+
     @Override
     public byte[] handleRequest(byte[] requestPayload) {
         try {
-            //스네이크 케이스의 json 읽어오기
-            FrontendSearchRequest frontendSearchRequest = objectMapper.readValue(requestPayload, FrontendSearchRequest.class);
+            FrontendSearchRequest frontendSearchRequest =
+                    objectMapper.readValue(requestPayload, FrontendSearchRequest.class);
 
-            //json을 캐멀케이스의 자바 객체로 변형한 후 서버에서 처리함. 처리한 내용을 응답으로 만듬
-            FrontendSearchResponse frontendSearchResponse = createFrontEndResponse(frontendSearchRequest);
+            FrontendSearchResponse frontendSearchResponse = createFrontendResponse(frontendSearchRequest);
 
-            //서버에서 만든 응답을 다시 json으로 씀.
             return objectMapper.writeValueAsBytes(frontendSearchResponse);
         } catch (IOException e) {
             e.printStackTrace();
@@ -53,26 +71,30 @@ public class UserSearchHandler implements OnRequestCallback {
         }
     }
 
-    private FrontendSearchResponse createFrontEndResponse(FrontendSearchRequest frontendSearchRequest) {
+    private FrontendSearchResponse createFrontendResponse(FrontendSearchRequest frontendSearchRequest) {
         SearchModel.Response searchClusterResponse = sendRequestToSearchCluster(frontendSearchRequest.getSearchQuery());
 
         List<FrontendSearchResponse.SearchResultInfo> filteredResults =
-                filterResults(searchClusterResponse, frontendSearchRequest.getMaxNumberOfResults()
-                        , frontendSearchRequest.getMinScore());
+                filterResults(searchClusterResponse,
+                        frontendSearchRequest.getMaxNumberOfResults(),
+                        frontendSearchRequest.getMinScore());
 
         return new FrontendSearchResponse(filteredResults, DOCUMENTS_LOCATION);
     }
 
-    private List<FrontendSearchResponse.SearchResultInfo> filterResults(SearchModel.Response searchClusterResponse, long maxResults, double minScore) {
+    private List<FrontendSearchResponse.SearchResultInfo> filterResults(SearchModel.Response searchClusterResponse,
+                                                                        long maxResults,
+                                                                        double minScore) {
+
         double maxScore = getMaxScore(searchClusterResponse);
 
         List<FrontendSearchResponse.SearchResultInfo> searchResultInfoList = new ArrayList<>();
 
         for (int i = 0; i < searchClusterResponse.getRelevantDocumentsCount() && i < maxResults; i++) {
-            int normalizedDocumentScore = normalizeScore(searchClusterResponse.getRelevantDocuments(i).getScore(), maxScore);
 
+            int normalizedDocumentScore = normalizeScore(searchClusterResponse.getRelevantDocuments(i).getScore(), maxScore);
             if (normalizedDocumentScore < minScore) {
-                break;
+                continue; // break in the lecture is an error
             }
 
             String documentName = searchClusterResponse.getRelevantDocuments(i).getDocumentName();
@@ -89,32 +111,9 @@ public class UserSearchHandler implements OnRequestCallback {
         return searchResultInfoList;
     }
 
-
     @Override
     public String getEndpoint() {
         return ENDPOINT;
-    }
-
-
-    private SearchModel.Response sendRequestToSearchCluster(String searchQuery) {
-        SearchModel.Request searchRequest = SearchModel.Request.newBuilder()
-                .setSearchQuery(searchQuery)
-                .build();
-
-        try {
-            String coordinatorAddress = searchCoordinatorRegistry.getRandomServiceAddress();
-            if (coordinatorAddress == null) {
-                System.out.println("Search Cluster Coordinator is unavailable");
-                return SearchModel.Response.getDefaultInstance();
-            }
-
-            byte[] payloadBody = client.sendTask(coordinatorAddress, searchRequest.toByteArray()).join();
-
-            return SearchModel.Response.parseFrom(payloadBody);
-        } catch (InterruptedException | KeeperException | InvalidProtocolBufferException e) {
-            e.printStackTrace();
-            return SearchModel.Response.getDefaultInstance();
-        }
     }
 
     private static String getDocumentExtension(String document) {
@@ -142,5 +141,26 @@ public class UserSearchHandler implements OnRequestCallback {
                 .map(document -> document.getScore())
                 .max(Double::compareTo)
                 .get();
+    }
+
+    private SearchModel.Response sendRequestToSearchCluster(String searchQuery) {
+        SearchModel.Request searchRequest = SearchModel.Request.newBuilder()
+                .setSearchQuery(searchQuery)
+                .build();
+
+        try {
+            String coordinatorAddress = searchCoordinatorRegistry.getRandomServiceAddress();
+            if (coordinatorAddress == null) {
+                System.out.println("Search Cluster Coordinator is unavailable");
+                return SearchModel.Response.getDefaultInstance();
+            }
+
+            byte[] payloadBody = client.sendTask(coordinatorAddress, searchRequest.toByteArray()).join();
+
+            return SearchModel.Response.parseFrom(payloadBody);
+        } catch (InterruptedException | KeeperException | InvalidProtocolBufferException e) {
+            e.printStackTrace();
+            return SearchModel.Response.getDefaultInstance();
+        }
     }
 }

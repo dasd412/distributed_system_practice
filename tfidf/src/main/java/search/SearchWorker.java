@@ -41,17 +41,19 @@ public class SearchWorker implements OnRequestCallback {
     }
 
     private List<String> parseWordsFromDocument(String document) {
+        FileReader fileReader = null;
         try {
-            FileReader fileReader = new FileReader(document);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
-
-            List<String> lines = bufferedReader.lines().collect(Collectors.toList());
-
-            return TFIDF.getWordsFromDocument(lines);
+            fileReader = new FileReader(document);
         } catch (FileNotFoundException e) {
             return Collections.emptyList();
         }
+
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        List<String> lines = bufferedReader.lines().collect(Collectors.toList());
+        List<String> words = TFIDF.getWordsFromDocument(lines);
+        return words;
     }
+
 
     @Override
     public String getEndpoint() {
