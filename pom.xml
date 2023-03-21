@@ -15,6 +15,7 @@
         <module>httpserver</module>
         <module>httpclient</module>
         <module>tfidf</module>
+        <module>tfidf-frontend</module>
     </modules>
 
     <properties>
