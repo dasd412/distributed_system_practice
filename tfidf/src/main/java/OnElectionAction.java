@@ -35,14 +35,15 @@ import java.net.UnknownHostException;
 
 public class OnElectionAction implements OnElectionCallback {
     private final ServiceRegistry workersServiceRegistry;
-    private final ServiceRegistry coordinationServiceRegistry;
-
+    private final ServiceRegistry coordinatorsServiceRegistry;
     private final int port;
     private WebServer webServer;
 
-    public OnElectionAction(ServiceRegistry workersServiceRegistry, ServiceRegistry coordinationServiceRegistry, int port) {
+    public OnElectionAction(ServiceRegistry workersServiceRegistry,
+                            ServiceRegistry coordinatorsServiceRegistry,
+                            int port) {
         this.workersServiceRegistry = workersServiceRegistry;
-        this.coordinationServiceRegistry = coordinationServiceRegistry;
+        this.coordinatorsServiceRegistry = coordinatorsServiceRegistry;
         this.port = port;
     }
 
@@ -60,8 +61,9 @@ public class OnElectionAction implements OnElectionCallback {
         webServer.startServer();
 
         try {
-            String currentServerAddress = String.format("http://%s:%d%s", InetAddress.getLocalHost().getCanonicalHostName(), port, searchCoordinator.getEndpoint());
-            coordinationServiceRegistry.registerToCluster(currentServerAddress);
+            String currentServerAddress =
+                    String.format("http://%s:%d%s", InetAddress.getLocalHost().getCanonicalHostName(), port, searchCoordinator.getEndpoint());
+            coordinatorsServiceRegistry.registerToCluster(currentServerAddress);
         } catch (InterruptedException | UnknownHostException | KeeperException e) {
             e.printStackTrace();
             return;
@@ -80,11 +82,10 @@ public class OnElectionAction implements OnElectionCallback {
             String currentServerAddress =
                     String.format("http://%s:%d%s", InetAddress.getLocalHost().getCanonicalHostName(), port, searchWorker.getEndpoint());
 
-            coordinationServiceRegistry.registerToCluster(currentServerAddress);
+            workersServiceRegistry.registerToCluster(currentServerAddress);
         } catch (InterruptedException | UnknownHostException | KeeperException e) {
             e.printStackTrace();
             return;
         }
-
     }
 }
