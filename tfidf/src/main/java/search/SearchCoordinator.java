@@ -21,7 +21,7 @@ public class SearchCoordinator implements OnRequestCallback {
 
     private static final String ENDPOINT = "/search";
 
-    private static final String BOOKS_DIRECTORY = "./resources/book";
+    private static final String BOOKS_DIRECTORY = "./resources/books/";
 
     private final ServiceRegistry workerServiceRegistry;
 
