@@ -16,6 +16,7 @@
         <module>httpclient</module>
         <module>tfidf</module>
         <module>tfidf-frontend</module>
+        <module>haproxy-practice/webapp</module>
     </modules>
 
     <properties>

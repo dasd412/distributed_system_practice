@@ -6,17 +6,8 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="httpserver" />
-        <module name="leader-selection" />
-        <module name="tfidf" />
-        <module name="tfidf-frontend" />
-        <module name="watcher-demo" />
-        <module name="service-registry" />
-        <module name="httpclient" />
+        <module name="webapp" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="front.end" target="11" />
-    </bytecodeTargetLevel>
   </component>
 </project>
