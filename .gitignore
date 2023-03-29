@@ -1,0 +1,40 @@
+# Maven generated files
+target/
+dependency-reduced-pom.xml
+buildNumber.properties
+
+# Eclipse IDE files
+.classpath
+.project
+.settings/
+
+# IntelliJ IDEA files
+*.iml
+*.iws
+.idea/
+
+# NetBeans IDE files
+nbproject/private/
+build/
+
+# Compiled classes
+*.class
+
+# Log files
+*.log
+
+# Package files
+*.jar
+*.war
+
+# IDE configuration files
+/.idea/workspace.xml
+/.idea/tasks.xml
+/.idea/dictionaries
+/.idea/vcs.xml
+/.idea/jsLibraryMappings.xml
+/.idea/codeStyles
+/.idea/inspectionProfiles
+/.idea/runConfigurations
+
+# Mac OS X specific
