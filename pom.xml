@@ -17,6 +17,7 @@
         <module>tfidf</module>
         <module>tfidf-frontend</module>
         <module>haproxy-practice/webapp</module>
+        <module>kafka-producer</module>
     </modules>
 
     <properties>
